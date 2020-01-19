@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        canvas{
+            width:1200px !important;
+            height:500px !important;
+        }
+        .input-group{
+            margin-top: 10px;
+        }
+        .row{
+            display: flex;
+            justify-content: center;
+            margin: 0 !important;
+        }
+        #new-item,#new-item-inter{
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="collapse navbar-collapse" id="navbarColor01">
+            <ul class="navbar-nav mr-auto">
+            <li class="nav-brand">
+                <a class="nav-link" href="/">Tiempo Real<span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="historial">Historial</a>
+            </li>
+            </ul>
+        </div>
+    </nav>
+    <center>
+        <h2>Historial</h2>
+    </center>
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <button class="nav-link active" id="Date" href="">Fecha</button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" id="inter" href="">Intervalo</button>
+        </li>
+      </ul>
+    <div class="f">
+        <div class="row">
+            <div class="input-group col-sm-4">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="">Fecha</span>
+                </div>
+                <input type="date" id="fecha" class="form-control">
+            </div>
+            <div class="input-group col-sm-4">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="">Hora</span>
+                </div>
+                <select name="" id="Horas" class="form-control">
+                    <option value=""></option>
+                </select>
+            </div>
+        </div>
+        <center class="f">
+        <button id="new-item" class="btn btn-primary">Consultar</button>
+        </center>
+    </div>
+    <div class="i" style="display: none">
+        <div class="row">
+            <div class="input-group col-sm-5">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="">De</span>
+                </div>
+                <input type="date" id="de" class="form-control">
+                <!-- --------------------------------------------- -->
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="">A</span>
+                </div>
+                <input type="date" id="a" class="form-control">
+            </div>
+        </div>
+        <center>
+        <button id="new-item-inter" class="btn btn-primary">Consultar</button>
+        </center>
+    </div>
+        <center>
+        <canvas id="mycanvas" ></canvas>
+        </center>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script> 
+    <script>
+        //$(".f").css("display","none");
+        $("#Date").click(function(){
+            $("#inter").removeClass("active")
+            $("#Date").addClass("active")
+            $(".f").css("display","block")
+            $(".i").css("display","none")
+            $("#new-item").removeClass("newinter")
+            $("#new-item").addClass("newdate")
+        })
+        $("#inter").click(function(){
+            $("#Date").removeClass("active")
+            $("#inter").addClass("active")
+            $(".i").css("display","block")
+            $(".f").css("display","none")
+            $("#new-item").removeClass("newdate")
+            $("#new-item").addClass("newinter")
+        })
+        var Horas = $("#Horas")
+        for(var x=0;x<24;x++){
+            Horas.append("<option value='"+x+"'>"+x+"</option>")
+        }
+        //--------------------------
+        function postItem() {
+            console.log($("#fecha").val())
+            fecha = {
+                hora:$("#Horas option:selected").val(),
+                fecha:$("#fecha").val(),
+                tipo:1
+            }
+            $.ajax({
+                type: "POST",
+                url: "/historial",
+                data: fecha,
+                success: function(data) {
+                    console.log(data)
+                    if(data!=0){
+                        data.forEach(x => {
+                            console.log(x.hora)
+                            console.log(x.distancia);
+                            myChart.data.labels.push(x.hora);
+                            myChart.data.datasets.forEach(dataset => {
+                                dataset.data.push(x.distancia);
+                            });
+                            myChart.update();
+                        
+                        });
+                    }else console.log("No hay");
+                },
+                error: function(jqXHR, textStatus, err) {
+                    //show error message
+                    alert('text status '+textStatus+', err '+err)
+                }
+            });
+        }
+        //----------------------------------------------------
+        function intervalo(){
+            fecha = {
+                de:$("#de").val(),
+                a:$("#a").val(),
+                tipo:0
+            }
+            $.ajax({
+                type: "POST",
+                url: "/historial",
+                data: fecha,
+                success: function(data) {
+                    console.log(data)
+                    if(data!=0){
+                        data.forEach(x => {
+                            console.log(x.hora)
+                            console.log(x.distancia);
+                            myChart.data.labels.push(x.hora);
+                            myChart.data.datasets.forEach(dataset => {
+                                dataset.data.push(x.distancia);
+                            });
+                            myChart.update();
+                        
+                        });
+                    }else console.log("No hay");
+                },
+                error: function(jqXHR, textStatus, err) {
+                    //show error message
+                    alert('text status '+textStatus+', err '+err)
+                }
+            });
+        }
+        //-----------------------------------------------------
+        $("#new-item").click(function() {
+            console.log("Hola newdate")
+            postItem();
+        });
+        $("#new-item-inter").click(function() {
+            console.log("Hola newinter")
+            intervalo();
+        });
+
+        var ctx = document.getElementById("mycanvas").getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                  label: "Datos del Dren",
+                  backgroundColor: 'rgba(173, 81, 255,.6)',
+                  borderColor: 'rgb(173, 81, 255)',
+                  data: [],
+                }]
+            },
+            options: {
+              scales: {
+                      yAxes: [{
+                          ticks: {
+                              beginAtZero: true
+                          }
+                      }]
+                  }
+              }
+
+        });
+    </script>
+</body>
+</html>

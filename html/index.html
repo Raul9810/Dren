@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <title>Node arduino</title>
+</head>
+<style>
+    canvas{
+        width:1200px !important;
+        height:500px !important;
+    }
+</style>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  
+    <div class="collapse navbar-collapse" id="navbarColor01">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/">Tiempo Real<span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="historial">Historial</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+  <center>
+      <h1>Datos en tiempo real</h1>
+  </center>
+  <center>
+    <canvas id="mycanvas" ></canvas>
+  </center>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"></script>
+   <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script>
+        //io se ejecuta y se guarda en socket
+       const socket = io();
+       socket.emit('chat',"Hola");
+       let counter=0;
+       socket.on('arduino:data',function(dataSerial){
+           //console.log(data);
+           var t =new Date;
+           var hour= t.getHours();
+           var min= t.getMinutes();
+           var sec= t.getSeconds();
+           var h = hour+":"+min+":"+sec;
+           console.log(dataSerial.value);
+           myChart.data.labels.push(h);
+           myChart.data.datasets.forEach(dataset => {
+              dataset.data.push(dataSerial.value);
+           });
+           myChart.update();
+       });//escuchar arduino:data
+
+       var ctx = document.getElementById("mycanvas").getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['serial'],
+                datasets: [{
+                  label: "Datos del Dren",
+                  backgroundColor: 'rgba(173, 81, 255,.6)',
+                  borderColor: 'rgb(173, 81, 255)',
+                  data: [],
+                }]
+            },
+            options: {
+              scales: {
+                      yAxes: [{
+                          ticks: {
+                              beginAtZero: true
+                          }
+                      }]
+                  }
+              }
+
+        });
+    </script>
+</body>
+</html>
